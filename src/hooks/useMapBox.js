@@ -27,7 +27,14 @@ export const useMapBox = (initialPoint) => {
             .addTo( map.current)
             .setDraggable( true );
 
-        markers.current[ marker.id ] = marker
+        markers.current[ marker.id ] = marker;
+
+
+        marker.on('drag', ({ target }) => {
+            const { id } = target;
+            const { lng, lat } = target.getLngLat();
+            
+        })
 
         console.log(markers.current)
     }, [] )
