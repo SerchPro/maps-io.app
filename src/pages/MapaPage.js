@@ -13,7 +13,8 @@ const initialPoint = {
 }
 export const MapaPage = () => {
     const divMap = useRef();
-    const [ map, setMap] = useState();
+    //const [ map, setMap] = useState();
+    const map = useRef();
     const [ coords, setCoords ] = useState(initialPoint);
 
     useEffect(() => {
@@ -24,19 +25,20 @@ export const MapaPage = () => {
             zoom: initialPoint.zoom
             });
 
-            setMap(mapbx)
+            //setMap(mapbx)
+            map.current = mapbx;
     }, []);
 
     useEffect(() => {
-        map?.on('move', () =>{
-            const { lng, lat} = map.getCenter();
+        map.current?.on('move', () =>{
+            const { lng, lat} = map.current.getCenter();
             setCoords({
                 lng: lng.toFixed(4),
                 lat: lat.toFixed(4),
-                zoom: map.getZoom().toFixed(2)
+                zoom: map.current.getZoom().toFixed(2)
             })
         })
-    }, [map])
+    }, [])
     
     
     return (
