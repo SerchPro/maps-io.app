@@ -16,6 +16,22 @@ export const useMapBox = (initialPoint) => {
     const map = useRef();
     const [ coords, setCoords ] = useState(initialPoint);
 
+
+    const addMark = useCallback ( ( ev ) =>{
+        const { lng, lat } = ev.lngLat;
+        const marker = new mapboxgl.Marker();
+        marker.id = v4();
+
+        marker
+            .setLngLat( [ lng, lat])
+            .addTo( map.current)
+            .setDraggable( true );
+
+        markers.current[ marker.id ] = marker
+
+        console.log(markers.current)
+    }, [] )
+
     useEffect(() => {
         const mapbx = new mapboxgl.Map({
             container: divMap.current,
@@ -40,25 +56,13 @@ export const useMapBox = (initialPoint) => {
 
 
     useEffect (() =>{
-        map.current?.on('click', (ev) =>{
-            const { lng, lat } = ev.lngLat;
-            const marker = new mapboxgl.Marker();
-
-            marker.id = v4();
-
-            marker
-                .setLngLat( [ lng, lat])
-                .addTo( map.current)
-                .setDraggable( true );
-
-            markers.current[ marker.id ] = marker
-
-            console.log(markers.current)
-        });
-    }, [] )
+        map.current?.on('click',  addMark);
+    }, [addMark] )
 
     return {
+        addMark,
         coords,
+        markers,
         setRef
     }
 }
