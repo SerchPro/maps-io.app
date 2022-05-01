@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import mapboxgl from 'mapbox-gl';
 import { useCallback } from "react";
+import { v4 } from 'uuid';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibWV4aWNvbGluZG84NiIsImEiOiJjbDJtaTV6cjYwZGZkM2NwN2lpNXZ5aHBwIn0.UD-1dHRAYtQXyml42YoVyQ';
 
@@ -8,7 +9,9 @@ export const useMapBox = (initialPoint) => {
     const divMap = useRef();
     const setRef = useCallback( (node) => {
         divMap.current = node;
-    }, [])
+    }, []);
+
+    const markers = useRef( {} );
 
     const map = useRef();
     const [ coords, setCoords ] = useState(initialPoint);
@@ -34,6 +37,25 @@ export const useMapBox = (initialPoint) => {
             })
         })
     }, []);
+
+
+    useEffect (() =>{
+        map.current?.on('click', (ev) =>{
+            const { lng, lat } = ev.lngLat;
+            const marker = new mapboxgl.Marker();
+
+            marker.id = v4();
+
+            marker
+                .setLngLat( [ lng, lat])
+                .addTo( map.current)
+                .setDraggable( true );
+
+            markers.current[ marker.id ] = marker
+
+            console.log(markers.current)
+        });
+    }, [] )
 
     return {
         coords,
