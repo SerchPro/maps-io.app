@@ -1,6 +1,5 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import mapboxgl from 'mapbox-gl';
-import { useCallback } from "react";
 import { v4 } from 'uuid';
 import { Subject} from 'rxjs';
 
@@ -13,8 +12,6 @@ export const useMapBox = (initialPoint) => {
     }, []);
 
     const markers = useRef( {} );
-
-
     const moveMarker = useRef( new Subject() );
     const newMarker = useRef( new Subject() );
 
@@ -22,10 +19,10 @@ export const useMapBox = (initialPoint) => {
     const [ coords, setCoords ] = useState(initialPoint);
 
 
-    const addMark = useCallback ( ( ev ) =>{
-        const { lng, lat } = ev.lngLat;
+    const addMark = useCallback ( ( ev , id ) =>{
+        const { lng, lat } = ev.lngLat || ev;
         const marker = new mapboxgl.Marker();
-        marker.id = v4();
+        marker.id = id ?? v4();
 
         marker
             .setLngLat( [ lng, lat])
@@ -34,26 +31,24 @@ export const useMapBox = (initialPoint) => {
 
         markers.current[ marker.id ] = marker;
 
-        newMarker.current.next({
-            id: marker.id,
-            lng,
-            lat
-        });
-
+        if ( !id ) {
+            newMarker.current.next({
+                id: marker.id,
+                lng,
+                lat
+            });
+        }
 
         marker.on('drag', ({ target }) => {
             const { id } = target;
             const { lng, lat } = target.getLngLat();
+            moveMarker.current.next({ id, lng, lat });
+        });
+    }, [] );
 
-            moveMarker.current.next({
-                id,
-                lng,
-                lat
-            });
-        })
-
-        //console.log(markers.current)
-    }, [] )
+    const updatePosition = useCallback( ({id, lng, lat}) => {
+        markers.current[id].setLngLat([lng, lat ])
+    }, []);
 
     useEffect(() => {
         const mapbx = new mapboxgl.Map({
@@ -62,7 +57,6 @@ export const useMapBox = (initialPoint) => {
             center: [ initialPoint.lng, initialPoint.lat],
             zoom: initialPoint.zoom
             });
-
             map.current = mapbx;
     }, [initialPoint]);
 
@@ -73,17 +67,18 @@ export const useMapBox = (initialPoint) => {
                 lng: lng.toFixed(4),
                 lat: lat.toFixed(4),
                 zoom: map.current.getZoom().toFixed(2)
-            })
-        })
+            });
+        });
     }, []);
 
 
     useEffect (() =>{
         map.current?.on('click',  addMark);
-    }, [addMark] )
+    }, [addMark] );
 
     return {
         addMark,
+        updatePosition,
         coords,
         markers,
         setRef,

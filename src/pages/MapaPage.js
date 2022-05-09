@@ -10,31 +10,51 @@ const initialPoint = {
     lat: 37.8010,
     zoom: 13.5
 }
+
+
 export const MapaPage = () => {
 
-    const { coords, setRef, newMarker$, moveMarker$ } = useMapBox(initialPoint);
-    const { socket } = useContext(SocketContext)
+    const { coords, setRef, newMarker$, moveMarker$, addMark, updatePosition } = useMapBox(initialPoint);
+    const { socket } = useContext(SocketContext);
 
+    // Listen to existing bookmarks
+    useEffect(() => {
+        socket.on('active-markers', (markers) => {
+            for(const key  of Object.keys(markers)) {
+                addMark(markers[key], key)
+            }
+        });
+    }, [socket, addMark])
+    
+    // new marker
     useEffect(() => {
         newMarker$.subscribe( marker =>{
             socket.emit('new-marker', marker)
         });
     }, [newMarker$, socket]);
 
+    // marker movement
     useEffect(() => {
         moveMarker$.subscribe( marker =>{
-            console.log(marker.id)
+            socket.emit('update-marker', marker)
         });
-    }, [moveMarker$]);
+    }, [socket, moveMarker$]);
 
+    // Move Marker Using Sockets
+    useEffect( () =>{
+        socket.on('update-marker', (marker) =>{
+            updatePosition(marker)
+        })
+    }, [socket, updatePosition]);
+
+    // Listen to new bookmarks
     useEffect(() => {
-      socket.on('new-marker', (marker) =>{
-        console.log(marker)
-      });
+        socket.on('new-marker', (marker) =>{
+        addMark(marker, marker.id)
+    });
 
-      }, [socket])
-    
-    
+    }, [socket, addMark]);
+
     return (
         <>
             <div className='info'>
